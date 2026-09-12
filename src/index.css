@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+html, body, #root {
+  height: 100%;
+}
+
+@theme inline {
+  --color-navy-950: #0c1a2e;
+  --color-navy-900: #0f2140;
+  --color-navy-800: #1a3358;
+  --color-navy-700: #1e3a5f;
+  --color-navy-600: #2563a8;
+  --color-navy-50: #f0f4fb;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+}
+
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-raised: #f1f5f9;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --brand: #1e3a5f;
+  --brand-light: #2563a8;
+  --brand-subtle: #e8f0fb;
+  --ai-accent: #6366f1;
+  --ai-subtle: #eef2ff;
+  --success: #059669;
+  --success-subtle: #ecfdf5;
+  --warning: #d97706;
+  --warning-subtle: #fffbeb;
+  --danger: #dc2626;
+  --danger-subtle: #fef2f2;
+  --info: #0284c7;
+  --info-subtle: #f0f9ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbar by default, show on hover/scroll */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Custom utilities */
+.font-mono { font-family: 'DM Mono', ui-monospace, monospace; }
+
+/* AI shimmer for loading states */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+/* AI pulse indicator */
+@keyframes ai-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.ai-pulse { animation: ai-pulse 2s ease-in-out infinite; }
+
+/* Smooth transitions */
+.transition-all { transition: all 0.15s ease; }
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--brand-light);
+  outline-offset: 2px;
+}

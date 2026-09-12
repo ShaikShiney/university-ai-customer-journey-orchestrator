@@ -1,0 +1,10 @@
+{
+  "description": "Streamline university operations by unifying student and faculty interactions, enhancing decision-making with AI insights, and improving service coordination.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
