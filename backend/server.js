@@ -49,7 +49,10 @@ if (!JWT_SECRET) {
 
 app.use(
   cors({
-    origin: "http://localhost:8443",
+    origin: [
+      "http://localhost:8443",
+      "https://university-ai-customer-journey-ft2c.onrender.com"
+    ],
     credentials: true,
   })
 );
