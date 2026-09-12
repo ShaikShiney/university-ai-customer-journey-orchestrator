@@ -13,7 +13,7 @@ interface LoginProps {
 
 type Screen = 'login' | 'mfa' | 'forgot';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'https://university-ai-customer-journey.onrender.com';
 
 function getRole(backendRole: string): Role {
   switch (String(backendRole || '').toUpperCase()) {

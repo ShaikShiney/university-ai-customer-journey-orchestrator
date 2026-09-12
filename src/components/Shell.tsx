@@ -261,7 +261,7 @@ export default function Shell({
 
                   {showSection && (
                     <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest px-3 pt-4 pb-1">
-                      {item.section}
+                     {String(item.section ?? '')}
                     </p>
                   )}
 

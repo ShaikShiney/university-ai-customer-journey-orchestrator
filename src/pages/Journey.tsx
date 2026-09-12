@@ -9,7 +9,7 @@ import {
 } from '../components/ui';
 import { JOURNEY_STAGES } from '../data';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'https://university-ai-customer-journey.onrender.com';
 
 interface Student {
   id: number;

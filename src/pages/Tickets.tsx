@@ -14,7 +14,7 @@ import {
   Drawer,
 } from '../components/ui';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'https://university-ai-customer-journey.onrender.com';
 
 type Student = {
   id: number;

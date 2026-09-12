@@ -116,7 +116,7 @@ type Consent = {
   weekly_frequency_cap: number;
 };
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'https://university-ai-customer-journey.onrender.com';
 
 export default function Recommendations() {
   const [decisions, setDecisions] = useState<

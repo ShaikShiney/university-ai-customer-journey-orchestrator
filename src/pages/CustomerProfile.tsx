@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Avatar, Badge, Button, Card, KpiCard, Tabs,
   RiskBadge, AiBanner, ConfidenceBadge, ProgressBar,
@@ -24,35 +24,23 @@ interface TimelineEvent {
 
 // ─── Sample data ──────────────────────────────────────────────────────────────
 
-const STUDENT = {
-  id: 's1',
-  name: 'Ananya Sharma',
-  studentId: 'STU-2026-0142',
-  avatar: 'AS',
-  programme: 'B.Tech Computer Science',
-  department: 'Computer Science',
-  year: 3,
-  yearLabel: '3rd Year',
-  journeyStage: 'Placement',
-  riskLevel: 'medium' as const,
-  engagementLevel: 'high',
-  engagementScore: 78,
-  email: 'a.sharma@student.university.edu',
-  phone: '+91 98765 43210',
-  attendance: 82,
-  cgpa: 8.4,
-  openTickets: 2,
-  churnPropensity: 18,
-  placementReadiness: 76,
-  consentEmail: true,
-  consentSMS: true,
-  consentMessaging: true,
-  consentMarketing: false,
-  commFrequency: 3,
-  commFrequencyLimit: 5,
-  enrolledDate: '2023-08-01',
-  advisor: 'Dr. Rekha Iyer',
-};
+interface DbStudent {
+  id: number;
+  student_id: string;
+  name: string;
+  email: string;
+  programme: string;
+  department: string;
+  year: number;
+  attendance: number;
+  cgpa: number;
+  journey_stage: string;
+  risk_level: string;
+  engagement_score: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 
 const TIMELINE_EVENTS: TimelineEvent[] = [
   {
@@ -878,8 +866,88 @@ interface Props {
   onNavigate?: (page: string, params?: Record<string, string>) => void;
 }
 
-export default function CustomerProfile({ onNavigate }: Props) {
+export default function CustomerProfile({ studentId, onNavigate }: Props) {
   const [tab, setTab] = useState('Overview');
+  const [student, setStudent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        setLoading(true);
+        setError('');
+
+        if (!studentId) {
+          throw new Error('Student ID is missing');
+        }
+
+        const response = await fetch('https://university-ai-customer-journey.onrender.com/api/students');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch students');
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to fetch students');
+        }
+
+        const dbStudent: DbStudent | undefined = result.data.find(
+          (item: DbStudent) => item.student_id === studentId
+        );
+
+        if (!dbStudent) {
+          throw new Error('Student not found');
+        }
+
+        const normalizedStudent = {
+          id: dbStudent.id,
+          name: dbStudent.name,
+          studentId: dbStudent.student_id,
+          avatar: dbStudent.name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase(),
+          programme: dbStudent.programme,
+          department: dbStudent.department,
+          year: Number(dbStudent.year),
+          yearLabel: `${Number(dbStudent.year)}${Number(dbStudent.year) === 1 ? 'st' : Number(dbStudent.year) === 2 ? 'nd' : Number(dbStudent.year) === 3 ? 'rd' : 'th'} Year`,
+          journeyStage: dbStudent.journey_stage,
+          riskLevel: (dbStudent.risk_level || 'medium').toLowerCase(),
+          engagementLevel: Number(dbStudent.engagement_score) >= 75 ? 'high' : Number(dbStudent.engagement_score) >= 50 ? 'medium' : 'low',
+          engagementScore: Number(dbStudent.engagement_score || 0),
+          email: dbStudent.email,
+          phone: '—',
+          attendance: Number(dbStudent.attendance || 0),
+          cgpa: Number(dbStudent.cgpa || 0),
+          openTickets: 0,
+          churnPropensity: 18,
+          placementReadiness: 76,
+          consentEmail: true,
+          consentSMS: true,
+          consentMessaging: true,
+          consentMarketing: false,
+          commFrequency: 3,
+          commFrequencyLimit: 5,
+          enrolledDate: dbStudent.created_at ? new Date(dbStudent.created_at).toISOString().slice(0, 10) : '—',
+          advisor: '—',
+        };
+
+        setStudent(normalizedStudent);
+      } catch (err) {
+        console.error('Student profile fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Unable to load student profile.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudent();
+  }, [studentId]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [overrideModal, setOverrideModal] = useState(false);
@@ -899,6 +967,29 @@ export default function CustomerProfile({ onNavigate }: Props) {
     setOverrideReason('');
     showToast('Override recorded in audit log.');
   };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <Card className="p-10 text-center">
+          <p className="text-sm text-slate-500">Loading student profile from database...</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error || !student) {
+    return (
+      <div className="p-6">
+        <Card className="p-10 text-center">
+          <p className="text-sm text-red-600">{error || 'Student profile not found.'}</p>
+          <Button variant="secondary" size="sm" className="mt-4" onClick={() => onNavigate?.('customers')}>
+            ← Back to Customers
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -920,38 +1011,38 @@ export default function CustomerProfile({ onNavigate }: Props) {
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap mb-1">
-                  <h1 className="text-xl font-bold text-slate-900">{STUDENT.name}</h1>
-                  <RiskBadge level={STUDENT.riskLevel} />
+                  <h1 className="text-xl font-bold text-slate-900">{student.name}</h1>
+                  <RiskBadge level={student.riskLevel} />
                   <Badge variant="success">High Engagement</Badge>
                   <Badge variant="ai">Placement Stage</Badge>
                 </div>
 
                 {/* Meta row */}
                 <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap mb-2">
-                  <span className="font-mono font-semibold text-slate-600">{STUDENT.studentId}</span>
+                  <span className="font-mono font-semibold text-slate-600">{student.studentId}</span>
                   <span className="text-slate-300">·</span>
-                  <span>{STUDENT.programme}</span>
+                  <span>{student.programme}</span>
                   <span className="text-slate-300">·</span>
-                  <span>{STUDENT.yearLabel}</span>
+                  <span>{student.yearLabel}</span>
                   <span className="text-slate-300">·</span>
-                  <span>Dept. {STUDENT.department}</span>
+                  <span>Dept. {student.department}</span>
                   <span className="text-slate-300">·</span>
-                  <span>Advisor: {STUDENT.advisor}</span>
+                  <span>Advisor: {student.advisor}</span>
                 </div>
 
                 {/* Contact */}
                 <div className="flex items-center gap-4 text-xs text-slate-500">
-                  <a href={`mailto:${STUDENT.email}`} className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors">
+                  <a href={`mailto:${student.email}`} className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors">
                     <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                    {STUDENT.email}
+                    {student.email}
                   </a>
                   <span className="flex items-center gap-1.5">
                     <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.95-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                    {STUDENT.phone}
+                    {student.phone}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Enrolled: {STUDENT.enrolledDate}
+                    Enrolled: {student.enrolledDate}
                   </span>
                 </div>
               </div>
@@ -974,12 +1065,12 @@ export default function CustomerProfile({ onNavigate }: Props) {
         {/* ── KPI STRIP ───────────────────────────────────────────────── */}
         <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 py-4 border-t border-slate-100">
           {[
-            { label: 'Attendance', value: `${STUDENT.attendance}%`, color: STUDENT.attendance >= 80 ? 'text-emerald-600' : 'text-amber-600', sub: STUDENT.attendance >= 75 ? 'Above threshold' : 'Below threshold' },
-            { label: 'CGPA', value: STUDENT.cgpa.toFixed(1), color: 'text-slate-900', sub: '/ 10.00' },
-            { label: 'Open Tickets', value: String(STUDENT.openTickets), color: STUDENT.openTickets > 0 ? 'text-amber-600' : 'text-emerald-600', sub: 'Active issues' },
-            { label: 'Engagement', value: `${STUDENT.engagementScore}%`, color: 'text-indigo-600', sub: 'High' },
-            { label: 'Churn Risk', value: `${STUDENT.churnPropensity}%`, color: STUDENT.churnPropensity > 40 ? 'text-red-600' : STUDENT.churnPropensity > 20 ? 'text-amber-600' : 'text-emerald-600', sub: STUDENT.churnPropensity <= 20 ? 'Low risk' : 'Medium risk' },
-            { label: 'Placement Ready', value: `${STUDENT.placementReadiness}%`, color: STUDENT.placementReadiness >= 80 ? 'text-emerald-600' : 'text-amber-600', sub: 'Target: 80%' },
+            { label: 'Attendance', value: `${student.attendance}%`, color: student.attendance >= 80 ? 'text-emerald-600' : 'text-amber-600', sub: student.attendance >= 75 ? 'Above threshold' : 'Below threshold' },
+            { label: 'CGPA', value: student.cgpa.toFixed(1), color: 'text-slate-900', sub: '/ 10.00' },
+            { label: 'Open Tickets', value: String(student.openTickets), color: student.openTickets > 0 ? 'text-amber-600' : 'text-emerald-600', sub: 'Active issues' },
+            { label: 'Engagement', value: `${student.engagementScore}%`, color: 'text-indigo-600', sub: 'High' },
+            { label: 'Churn Risk', value: `${student.churnPropensity}%`, color: student.churnPropensity > 40 ? 'text-red-600' : student.churnPropensity > 20 ? 'text-amber-600' : 'text-emerald-600', sub: student.churnPropensity <= 20 ? 'Low risk' : 'Medium risk' },
+            { label: 'Placement Ready', value: `${student.placementReadiness}%`, color: student.placementReadiness >= 80 ? 'text-emerald-600' : 'text-amber-600', sub: 'Target: 80%' },
           ].map(kpi => (
             <div key={kpi.label} className="text-center px-2">
               <p className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</p>
@@ -1059,10 +1150,10 @@ export default function CustomerProfile({ onNavigate }: Props) {
                 <SectionHeader title="Consent Status" subtitle="Current permissions" />
                 <div className="space-y-2 mb-3">
                   {[
-                    { label: 'Email', allowed: STUDENT.consentEmail },
-                    { label: 'SMS', allowed: STUDENT.consentSMS },
-                    { label: 'Messaging', allowed: STUDENT.consentMessaging },
-                    { label: 'Marketing', allowed: STUDENT.consentMarketing },
+                    { label: 'Email', allowed: student.consentEmail },
+                    { label: 'SMS', allowed: student.consentSMS },
+                    { label: 'Messaging', allowed: student.consentMessaging },
+                    { label: 'Marketing', allowed: student.consentMarketing },
                   ].map(c => (
                     <div key={c.label} className="flex items-center justify-between py-1.5 border-b border-slate-50">
                       <span className="text-xs text-slate-600">{c.label}</span>
@@ -1073,9 +1164,9 @@ export default function CustomerProfile({ onNavigate }: Props) {
                 <div className="bg-slate-50 rounded-lg p-2.5">
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <span className="text-slate-600 font-medium">Frequency this week</span>
-                    <span className="font-bold text-slate-800">{STUDENT.commFrequency} / {STUDENT.commFrequencyLimit}</span>
+                    <span className="font-bold text-slate-800">{student.commFrequency} / {student.commFrequencyLimit}</span>
                   </div>
-                  <ProgressBar value={STUDENT.commFrequency} max={STUDENT.commFrequencyLimit} color="#6366f1" />
+                  <ProgressBar value={student.commFrequency} max={student.commFrequencyLimit} color="#6366f1" />
                 </div>
               </Card>
 
@@ -1138,7 +1229,7 @@ export default function CustomerProfile({ onNavigate }: Props) {
         {/* ── JOURNEY TAB ──────────────────────────────────────────────── */}
         {tab === 'Journey' && (
           <Card className="p-6">
-            <SectionHeader title="Journey Timeline" subtitle={`${STUDENT.name} · ${STUDENT.studentId}`} />
+            <SectionHeader title="Journey Timeline" subtitle={`${student.name} · ${student.studentId}`} />
             <JourneyProgressSection />
           </Card>
         )}
@@ -1175,7 +1266,7 @@ export default function CustomerProfile({ onNavigate }: Props) {
         {/* ── ACADEMIC TAB ─────────────────────────────────────────────── */}
         {tab === 'Academic' && (
           <Card className="p-6">
-            <SectionHeader title="Academic Performance" subtitle={`${STUDENT.programme} · Semester 6`} />
+            <SectionHeader title="Academic Performance" subtitle={`${student.programme} · Semester 6`} />
             <AcademicSection />
           </Card>
         )}
@@ -1307,10 +1398,10 @@ export default function CustomerProfile({ onNavigate }: Props) {
         <div className="space-y-4">
           <p className="text-xs text-slate-500">Changes are audited. Only authorised fields can be edited.</p>
           {[
-            { label: 'Full Name', value: STUDENT.name },
-            { label: 'Email Address', value: STUDENT.email },
-            { label: 'Phone Number', value: STUDENT.phone },
-            { label: 'Advisor', value: STUDENT.advisor },
+            { label: 'Full Name', value: student.name },
+            { label: 'Email Address', value: student.email },
+            { label: 'Phone Number', value: student.phone },
+            { label: 'Advisor', value: student.advisor },
           ].map(f => (
             <div key={f.label} className="flex flex-col gap-1">
               <label className="text-sm font-medium text-slate-700">{f.label}</label>
